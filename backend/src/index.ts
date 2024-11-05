@@ -1,10 +1,16 @@
 import { Hono } from "hono";
 import { PrismaClient } from "@prisma/client/edge";
 import { withAccelerate } from "@prisma/extension-accelerate";
-import { hashPassword, comparePasswords } from "./utils/hashing";
-import { createUserSchema } from "./utils/zodValidations/userSchemas";
-import { verifyToken, generateToken } from "./utils/jwt";
 
+import { hashPassword, comparePasswords } from "./utils/hashing";
+import {
+  createUserSchema,
+  signInSchema,
+} from "./utils/zodValidations/userSchemas";
+import { generateToken } from "./utils/jwt";
+import { authCheck } from "./middlewares/authCheck";
+
+// Constants
 const app = new Hono<{
   Bindings: { DATABASE_URL: string; JWT_SECRET: string };
 }>();
@@ -15,6 +21,10 @@ interface User {
   password: string;
 }
 
+// Middlewares
+app.use("/api/v1/blog/*", authCheck);
+
+//  Routes
 app.get("/", (c) => {
   return c.text("Hello Hono!");
 });
@@ -67,6 +77,10 @@ app.post("/api/v1/user/signin", async (c) => {
   const { email, password } = body;
 
   if (typeof email !== "string" || typeof password !== "string") {
+    return c.text("Invalid input types", 400);
+  }
+
+  if (!signInSchema.safeParse({ email, password }).success) {
     return c.text("Invalid input types", 400);
   }
 
