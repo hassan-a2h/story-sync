@@ -1,6 +1,4 @@
 import { Hono } from "hono";
-import { PrismaClient } from "@prisma/client/edge";
-import { withAccelerate } from "@prisma/extension-accelerate";
 
 import { hashPassword, comparePasswords } from "./utils/hashing";
 import {
@@ -9,6 +7,7 @@ import {
 } from "./utils/zodValidations/userSchemas";
 import { generateToken } from "./utils/jwt";
 import { authCheck } from "./middlewares/authCheck";
+import { dbSetup } from "./middlewares/dbSetup";
 
 // Constants
 const app = new Hono<{
@@ -23,6 +22,7 @@ interface User {
 
 // Middlewares
 app.use("/api/v1/blog/*", authCheck);
+app.use("/api/v1/*", dbSetup);
 
 //  Routes
 app.get("/", (c) => {
@@ -30,12 +30,8 @@ app.get("/", (c) => {
 });
 
 app.post("/api/v1/user/signup", async (c) => {
-  const prisma = new PrismaClient({
-    datasourceUrl: c.env.DATABASE_URL,
-  }).$extends(withAccelerate());
-
+  const prisma = (c as any).prisma;
   const body = await c.req.parseBody();
-
   const { name, email, password } = body;
 
   if (
@@ -69,10 +65,7 @@ app.post("/api/v1/user/signup", async (c) => {
 });
 
 app.post("/api/v1/user/signin", async (c) => {
-  const prisma = new PrismaClient({
-    datasourceUrl: c.env.DATABASE_URL,
-  }).$extends(withAccelerate());
-
+  const prisma = (c as any).prisma;
   const body = await c.req.parseBody();
   const { email, password } = body;
 
