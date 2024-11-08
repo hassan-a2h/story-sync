@@ -2,12 +2,14 @@ import { Hono } from "hono";
 
 import appRouter from "./routes";
 
+import { contextBindings, contextVariables } from "./common/context";
 import { authCheck } from "./middlewares/authCheck";
 import { dbSetup } from "./middlewares/dbSetup";
 
 // Constants
 const app = new Hono<{
-  Bindings: { DATABASE_URL: string; JWT_SECRET: string };
+  Bindings: contextBindings;
+  Variables: contextVariables;
 }>();
 
 // Middlewares

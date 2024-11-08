@@ -10,7 +10,12 @@ export async function authCheck(
   }
 
   try {
-    verifyToken(c.req.header("Authorization") ?? "", c.env.JWT_SECRET);
+    const { id } = verifyToken(
+      c.req.header("Authorization") ?? "",
+      c.env.JWT_SECRET
+    );
+
+    c.set("user", id);
   } catch (error) {
     return c.text("Unauthorized", 401);
   }
